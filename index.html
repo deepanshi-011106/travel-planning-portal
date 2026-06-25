@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Travel Planning Portal</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">TravelPlanner</div>
+    <nav>
+      <a href="#destinations">Destinations</a>
+      <a href="#planner">Plan Trip</a>
+      <a href="#booking">Booking</a>
+      <a href="#budget">Budget</a>
+      <a href="#packing">Packing</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button id="themeToggle" class="btn-icon" title="Toggle theme">🌙</button>
+      <div id="authArea" class="auth-area"></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Discover, organize, explore</p>
+        <h1>Build your next adventure with confidence.</h1>
+        <p>Create a travel plan, save favorite destinations, and generate a complete itinerary in one place.</p>
+        <a class="cta-button" href="#planner">Start Planning</a>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card__header">
+          <span>Featured Destination</span>
+        </div>
+        <div class="hero-card__content">
+          <h2>Kyoto, Japan</h2>
+          <p>Temples, gardens, and cultural experiences await your next journey.</p>
+          <ul>
+            <li>Best time: Apr - May</li>
+            <li>Duration: 5-7 days</li>
+            <li>Highlights: Fushimi Inari, bamboo forest, tea ceremony</li>
+          </ul>
+        </div>
+      </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Login</h2>
+              <button class="modal-close" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <form id="loginForm" class="booking-form" onsubmit="loginUser(event)">
+              <div class="form-group">
+                <label>Email</label>
+                <input id="loginEmail" type="email" required />
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input id="loginPassword" type="password" required />
+              </div>
+              <div class="form-actions">
+                <button class="btn-primary" type="submit">Sign in</button>
+                <button type="button" class="btn-secondary" onclick="closeLoginModal()">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Register Modal -->
+        <div id="registerModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Register</h2>
+              <button class="modal-close" onclick="closeRegisterModal()">&times;</button>
+            </div>
+            <form id="registerForm" class="booking-form" onsubmit="registerUser(event)">
+              <div class="form-group">
+                <label>Name</label>
+                <input id="registerName" type="text" required />
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input id="registerEmail" type="email" required />
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input id="registerPassword" type="password" required />
+              </div>
+              <div class="form-actions">
+                <button class="btn-primary" type="submit">Create account</button>
+                <button type="button" class="btn-secondary" onclick="closeRegisterModal()">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Map Modal -->
+        <div id="mapModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 id="mapModalTitle">Map</h2>
+              <button class="modal-close" id="closeMapModalBtn">&times;</button>
+            </div>
+            <div id="map" style="height:420px;"></div>
+          </div>
+        </div>
+    </section>
+
+    <section id="destinations" class="section">
+      <div class="section-header">
+        <h2>Popular destinations</h2>
+        <p>Browse recommended trips to inspire your travel planning.</p>
+      </div>
+      <div class="filter-controls">
+        <input type="text" id="searchInput" placeholder="Search destinations..." class="search-input" />
+        <select id="filterCountry" class="filter-select">
+          <option value="">All countries</option>
+        </select>
+        <select id="filterTag" class="filter-select">
+          <option value="">All tags</option>
+        </select>
+      </div>
+      <div class="cards-grid" id="destinationCards"></div>
+    </section>
+
+    <section id="planner" class="section planner-section">
+      <div class="section-header">
+        <h2>Trip planner</h2>
+        <p>Enter your travel preferences and save a planned itinerary.</p>
+      </div>
+      <form id="tripForm" class="planner-form">
+        <label>
+          Trip name
+          <input type="text" id="tripName" placeholder="Weekend escape" required />
+        </label>
+        <label>
+          Destination
+          <input type="text" id="tripDestination" placeholder="e.g. Bali, Lisbon" required />
+        </label>
+        <label>
+          Start date
+          <input type="date" id="startDate" required />
+        </label>
+        <label>
+          End date
+          <input type="date" id="endDate" required />
+        </label>
+        <label>
+          Notes
+          <textarea id="tripNotes" rows="4" placeholder="Include sights, restaurants, or reminders."></textarea>
+        </label>
+        <button type="submit" class="primary-button">Save itinerary</button>
+      </form>
+    </section>
+
+    <section id="booking" class="section booking-section">
+      <div class="section-header">
+        <h2>Booking details</h2>
+        <p>Reserve your flight, hotel, and travel package for your next adventure.</p>
+      </div>
+      <button class="booking-launch-btn" id="openBookingModal">Open Booking Portal</button>
+      <div id="bookingSummary" class="booking-summary"></div>
+    </section>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+      <div class="modal-content booking-modal-content">
+        <div class="modal-header">
+          <h2>Travel Booking Portal</h2>
+          <button class="modal-close" id="closeBookingModal">&times;</button>
+        </div>
+        <form id="bookingForm" class="booking-form">
+          <div class="form-group">
+            <label>Destination *</label>
+            <select id="bookingDestination" required>
+              <option value="">Select a destination</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Traveler name *</label>
+            <input type="text" id="travelerName" placeholder="Your full name" required />
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="travelerEmail" placeholder="you@example.com" required />
+          </div>
+          <div class="form-group">
+            <label>Phone number</label>
+            <input type="tel" id="travelerPhone" placeholder="+1 (555) 000-0000" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Travel date *</label>
+              <input type="date" id="travelDate" required />
+            </div>
+            <div class="form-group">
+              <label>Duration (days) *</label>
+              <input type="number" id="bookingDuration" min="1" value="5" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Package type *</label>
+              <select id="bookingPackage" required>
+                <option value="standard">Standard - $150/day</option>
+                <option value="comfort">Comfort - $250/day</option>
+                <option value="luxury">Luxury - $400/day</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Number of travelers *</label>
+              <input type="number" id="travelersCount" min="1" value="1" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Special requests</label>
+            <textarea id="bookingNotes" rows="4" placeholder="Add travel preferences or special requests..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Confirm booking</button>
+            <button type="button" class="btn-secondary" id="cancelBookingModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <section id="itinerary" class="section itinerary-section">
+      <div class="section-header">
+        <h2>Your saved itineraries</h2>
+        <p>Track all planned trips and open them anytime.</p>
+      </div>
+      <div id="itineraryList" class="itinerary-list"></div>
+    </section>
+
+    <section id="myBookings" class="section bookings-section">
+      <div class="section-header">
+        <h2>My bookings</h2>
+        <p>All confirmed bookings are stored locally in your browser.</p>
+      </div>
+      <div class="card-actions">
+        <button class="secondary-button" id="exportBookingsBtn">Export / Print</button>
+      </div>
+      <div id="bookingsList" class="cards-grid" style="margin-top:18px;"></div>
+    </section>
+
+    <section id="budget" class="section budget-section">
+      <div class="section-header">
+        <h2>Budget calculator</h2>
+        <p>Estimate your trip expenses based on destination and duration.</p>
+      </div>
+      <form id="budgetForm" class="budget-form">
+        <label>
+          Travelers
+          <input type="number" id="budgetTravelers" min="1" value="1" />
+        </label>
+        <label>
+          Trip duration (days)
+          <input type="number" id="tripDuration" min="1" value="7" />
+        </label>
+        <label>
+          Daily budget per person ($)
+          <input type="number" id="dailyBudget" min="50" value="150" />
+        </label>
+        <button type="button" class="secondary-button">Calculate total</button>
+      </form>
+      <div id="budgetResult" class="budget-result"></div>
+    </section>
+
+    <section id="favorites" class="section favorites-section">
+      <div class="section-header">
+        <h2>Favorite destinations</h2>
+        <p>Your bookmarked places for easy access.</p>
+      </div>
+      <div id="favoritesList" class="cards-grid"></div>
+    </section>
+
+    <section id="groups" class="section groups-section">
+      <div class="section-header">
+        <h2>Group travel planning</h2>
+        <p>Create a shared group trip and invite others with a group ID.</p>
+      </div>
+      <form id="groupForm" onsubmit="createGroup(event)" class="planner-form">
+        <label>
+          Group title
+          <input id="groupTitle" type="text" placeholder="Weekend friends trip" required />
+        </label>
+        <label>
+          Destination
+          <input id="groupDestination" type="text" placeholder="e.g. Paris, France" required />
+        </label>
+        <button type="submit" class="primary-button">Create group</button>
+        <button type="button" class="secondary-button" onclick="joinGroupById()">Join group</button>
+      </form>
+      <div id="groupsList" class="cards-grid"></div>
+    </section>
+
+    <section id="emergency" class="section emergency-section">
+      <div class="section-header">
+        <h2>Emergency information</h2>
+        <p>Quick access to emergency numbers and embassy contacts.</p>
+      </div>
+      <div class="card-actions">
+        <button class="secondary-button" onclick="showEmergencyInfo()">Show emergency numbers</button>
+        <button class="secondary-button" onclick="showLocalEmergencyByGeolocation()">Detect local emergency</button>
+      </div>
+      <div id="emergencyPanel"></div>
+    </section>
+
+    <section id="packing" class="section packing-section">
+      <div class="section-header">
+        <h2>Packing checklist</h2>
+        <p>Don't forget anything! Print or save your packing list.</p>
+      </div>
+      <div id="packingChecklist" class="packing-checklist"></div>
+    </section>
+
+    <section id="tips" class="section tips-section">
+      <div class="section-header">
+        <h2>Travel tips</h2>
+        <p>Helpful advice for making your trip memorable.</p>
+      </div>
+      <div id="travelTips" class="tips-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Travel Planning Portal &copy; 2026</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
